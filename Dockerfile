@@ -1,6 +1,6 @@
 FROM node
 
-RUN npm install -g ember-cli bower
+RUN npm install -g ember-cli@0.40 bower
 
 EXPOSE 4200 35729
 WORKDIR /usr/src/app
