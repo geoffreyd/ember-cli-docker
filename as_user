@@ -1,0 +1,37 @@
+#!/bin/bash
+
+# This is a hack to run a command as a normal user with choosen uid/gid. This way,
+# files that get created in bind-mounted volumes are not inevitably owned by root.
+#
+# This hack will be useless once Docker supports user mapping.
+#
+# If USER_UID and USER_GID are set, it changes user uid/gid to the given values
+# and run given command with this user
+# else it runs normally as root
+
+numeric_re='^[0-9]+$'
+
+if [ -z "$USER_UID" -a -z "$USER_GID" ]
+then
+  exec "$@"
+elif [ -z "$USER_UID" ]
+then
+  echo "missing USER_UID" >&2
+  exit 1
+elif [ -z "$USER_GID" ]
+then
+  echo "missing USER_GID" >&2
+  exit 1
+elif ! [[ $USER_UID =~ $numeric_re ]]
+then
+  echo "given USER_UID is not a number" >&2
+  exit 1
+elif ! [[ $USER_GID =~ $numeric_re ]]
+then
+  echo "given USER_GID is not a number" >&2
+  exit 1
+else
+  [ $USER_UID = $(id --user user) ] || usermod --non-unique --uid $USER_UID user
+  [ $USER_GID = $(id --group user) ] || groupmod --non-unique --gid $USER_GID user
+  exec sudo -u user -- "$@"
+fi
